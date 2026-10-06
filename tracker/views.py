@@ -140,8 +140,25 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f'Welcome back, {user.username}!')
-            next_url = request.GET.get('next', 'dashboard')
-            return redirect(next_url)
+
+            # ── Safe redirect: NEVER follow an external or workspace URL ──
+            # LEARNSQUARE/SemesterPrep proxy injects ?next=/?folder=...
+            # which would redirect users back to VS Code after login.
+            # We validate 'next' is a relative internal path only.
+            from django.utils.http import url_has_allowed_host_and_scheme
+            next_url = request.POST.get('next') or request.GET.get('next', '')
+            if next_url and url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                # Extra safety: reject paths that look like workspace/editor URLs
+                suspicious = ['folder=', '8443', 'vscode', 'semesterprep', 'readme']
+                if not any(s in next_url.lower() for s in suspicious):
+                    return redirect(next_url)
+
+            # Default: always go to SpendWise dashboard
+            return redirect('dashboard')
     else:
         form = AuthenticationForm()
     return render(request, 'tracker/login.html', {'form': form})

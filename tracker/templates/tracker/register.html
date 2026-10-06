@@ -294,7 +294,7 @@
         <h1 class="auth-title">Create account</h1>
         <p class="auth-subtitle">Start tracking your expenses today.</p>
 
-        <form method="post" action="{% url 'register' %}" novalidate>
+        <form method="post" action="" novalidate>
           {% csrf_token %}
 
           {% if form.non_field_errors %}

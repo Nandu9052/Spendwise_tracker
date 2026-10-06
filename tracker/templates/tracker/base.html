@@ -1965,8 +1965,23 @@ document.addEventListener('DOMContentLoaded', function() {
   initProgressBars();
   initSpendingChart();
   initAmountInputs();
-  initCharCounters();
   initFilterAutoSubmit();
+
+  // Ensure all links and form actions preserve /proxy/8000/ when running behind reverse proxy
+  if (window.location.pathname.includes('/proxy/8000/')) {
+    document.querySelectorAll('a[href^="/"]').forEach(function(el) {
+      const href = el.getAttribute('href');
+      if (href.startsWith('/') && !href.startsWith('/proxy/8000/')) {
+        el.setAttribute('href', '/proxy/8000' + href);
+      }
+    });
+    document.querySelectorAll('form[action^="/"]').forEach(function(el) {
+      const action = el.getAttribute('action');
+      if (action.startsWith('/') && !action.startsWith('/proxy/8000/')) {
+        el.setAttribute('action', '/proxy/8000' + action);
+      }
+    });
+  }
 });
 
 </script>

@@ -165,11 +165,10 @@ def login_view(request):
 
 
 def logout_view(request):
-    if request.method == 'POST':
-        logout(request)
-        messages.info(request, 'You have been logged out successfully.')
-        return redirect('login')
-    return redirect('dashboard')
+    logout(request)
+    messages.info(request, 'You have been logged out successfully.')
+    return redirect('login')
+
 
 
 # ─── Dashboard View ─────────────────────────────────────────────────────────────

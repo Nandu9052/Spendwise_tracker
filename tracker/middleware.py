@@ -1,48 +1,31 @@
 from django.conf import settings
 from django.urls import set_script_prefix
+from django.shortcuts import redirect
 
 
 class DynamicCsrfMiddleware:
     """
     1. Dynamically trusts incoming Origin and Host headers so CSRF works
-       seamlessly under any proxy (LEARNSQUARE, SemesterPrep, Codespaces, etc.)
-    2. Automatically detects code-server reverse proxy (/proxy/8000/) and sets
-       Django's script prefix so all URLs, links ({% url ... %}), and redirects
-       (redirect('dashboard')) automatically stay inside /proxy/8000/ instead of
-       stripping the prefix and hitting port 8443 directly with 404 Not Found.
+       under any proxy (LEARNSQUARE, SemesterPrep, Codespaces, etc.)
+    2. Normalizes any double-proxy paths like /proxy/8000/proxy/8000/...
+       so routes resolve cleanly.
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # ── 1. Detect Reverse Proxy Prefix (code-server / LEARNSQUARE) ───
-        prefix = ''
-        
-        # Check explicit forward headers
-        fwd_prefix = request.META.get('HTTP_X_FORWARDED_PREFIX', '').strip()
-        if fwd_prefix:
-            prefix = fwd_prefix
-        elif request.path_info.startswith('/proxy/8000'):
-            prefix = '/proxy/8000'
+        # ── 1. Clean up duplicate proxy prefixes ──────────────────────────
+        # Code-server already rewrites redirects to /proxy/8000/.
+        # If double-prefixed paths arrive, strip them to normal paths.
+        while request.path_info.startswith('/proxy/8000'):
             request.path_info = request.path_info[len('/proxy/8000'):] or '/'
-        elif request.path_info.startswith('/absproxy/8000'):
-            prefix = '/absproxy/8000'
+        while request.path_info.startswith('/absproxy/8000'):
             request.path_info = request.path_info[len('/absproxy/8000'):] or '/'
-        else:
-            # Check if accessed via port 8443 (LEARNSQUARE code-server port)
-            host = request.get_host()
-            fwd_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
-            referer = request.META.get('HTTP_REFERER', '')
-            if ':8443' in host or ':8443' in fwd_host or '/proxy/8000' in referer:
-                prefix = '/proxy/8000'
 
-        if prefix:
-            if not prefix.endswith('/'):
-                prefix += '/'
-            set_script_prefix(prefix)
-        else:
-            set_script_prefix('/')
+        # Always keep script prefix default so code-server's reverse proxy
+        # handles external rewriting without double-prefix collisions.
+        set_script_prefix('/')
 
         # ── 2. Trust HTTP Origin & Host for CSRF ─────────────────────────
         origin = request.META.get('HTTP_ORIGIN', '').strip()

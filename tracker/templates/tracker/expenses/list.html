@@ -1,0 +1,213 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Expenses{% endblock %}
+{% block topbar_title %}Expenses{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+  <div>
+    <h1 class="page-title">Expenses</h1>
+    <p class="page-subtitle">Track where your money goes.</p>
+  </div>
+  <a href="{% url 'expense_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Expense
+  </a>
+</div>
+
+<!-- Summary KPIs -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="kpi-card kpi-card-primary" style="padding:16px;">
+      <div class="d-flex align-items-center gap-3">
+        <div class="kpi-icon kpi-icon-primary" style="width:38px;height:38px;font-size:18px;margin:0;" aria-hidden="true">
+          <i class="bi bi-receipt"></i>
+        </div>
+        <div>
+          <div class="kpi-value font-mono" style="font-size:20px;">₹{{ total|floatformat:2 }}</div>
+          <div class="kpi-label" style="font-size:12px;">{{ filter_month_label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card kpi-card-info" style="padding:16px;">
+      <div class="d-flex align-items-center gap-3">
+        <div class="kpi-icon kpi-icon-info" style="width:38px;height:38px;font-size:18px;margin:0;" aria-hidden="true">
+          <i class="bi bi-receipt-cutoff"></i>
+        </div>
+        <div>
+          <div class="kpi-value" style="font-size:20px;">{{ count }}</div>
+          <div class="kpi-label" style="font-size:12px;">Total Expenses</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card kpi-card-warning" style="padding:16px;">
+      <div class="d-flex align-items-center gap-3">
+        <div class="kpi-icon kpi-icon-warning" style="width:38px;height:38px;font-size:18px;margin:0;" aria-hidden="true">
+          <i class="bi bi-calculator"></i>
+        </div>
+        <div>
+          <div class="kpi-value font-mono" style="font-size:20px;">₹{{ avg|floatformat:2 }}</div>
+          <div class="kpi-label" style="font-size:12px;">Average Expense</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar" role="search" aria-label="Filter expenses">
+  <form method="get" action="{% url 'expense_list' %}" class="d-flex flex-wrap gap-3 w-100 align-items-end">
+    <!-- Month filter -->
+    <div style="flex:1;min-width:160px;">
+      <label class="form-label" for="month-filter">Month</label>
+      <select id="month-filter" name="month" class="form-select" data-auto-submit aria-label="Filter by month">
+        {% for opt in month_options %}
+        <option value="{{ opt.value }}" {% if opt.value == selected_month %}selected{% endif %}>
+          {{ opt.label }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Category filter -->
+    <div style="flex:1;min-width:160px;">
+      <label class="form-label" for="cat-filter">Category</label>
+      <select id="cat-filter" name="category" class="form-select" data-auto-submit aria-label="Filter by category">
+        <option value="">All Categories</option>
+        {% for cat in user_categories %}
+        <option value="{{ cat.pk }}" {% if selected_category == cat.pk|stringformat:"s" %}selected{% endif %}>
+          {{ cat.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Search -->
+    <div style="flex:2;min-width:200px;">
+      <label class="form-label" for="search-filter">Search Notes</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+        <input type="text"
+               id="search-filter"
+               name="q"
+               class="form-control"
+               placeholder="Search notes..."
+               value="{{ search_query }}"
+               aria-label="Search expense notes" />
+        <button type="submit" class="btn btn-primary" aria-label="Apply filters">Search</button>
+      </div>
+    </div>
+
+    {% if selected_category or search_query %}
+    <div>
+      <a href="{% url 'expense_list' %}?month={{ selected_month }}" class="btn btn-outline-secondary" aria-label="Clear filters">
+        <i class="bi bi-x-lg" aria-hidden="true"></i> Clear
+      </a>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Expense Table -->
+{% if expenses %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="sw-table" aria-label="Expenses table">
+        <thead>
+          <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Notes</th>
+            <th scope="col">Date</th>
+            <th scope="col" class="text-end">Amount</th>
+            <th scope="col" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in expenses %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="transaction-icon" style="width:34px;height:34px;font-size:16px;" aria-hidden="true">
+                  <i class="bi {{ item.icon }}"></i>
+                </div>
+                <span style="font-weight:600;">{{ item.expense.category.name }}</span>
+              </div>
+            </td>
+            <td>
+              <span style="color:var(--text-muted);font-size:13px;">
+                {% if item.expense.notes %}{{ item.expense.notes|truncatechars:50 }}{% else %}<em>—</em>{% endif %}
+              </span>
+            </td>
+            <td>
+              <span style="font-size:13px;color:var(--text-secondary);">{{ item.expense.date|date:"M d, Y" }}</span>
+            </td>
+            <td class="text-end">
+              <span class="font-mono" style="font-weight:700;font-size:15px;">₹{{ item.expense.amount|floatformat:2 }}</span>
+            </td>
+            <td class="text-center">
+              <div class="d-flex gap-1 justify-content-center">
+                <a href="{% url 'expense_edit' item.expense.pk %}"
+                   class="btn btn-outline-secondary btn-sm btn-icon"
+                   aria-label="Edit expense of ₹{{ item.expense.amount }}">
+                  <i class="bi bi-pencil" aria-hidden="true"></i>
+                </a>
+                <a href="{% url 'expense_delete' item.expense.pk %}"
+                   class="btn btn-sm btn-icon"
+                   style="background:var(--danger-light);color:var(--danger);border:1px solid transparent;"
+                   aria-label="Delete expense of ₹{{ item.expense.amount }}">
+                  <i class="bi bi-trash" aria-hidden="true"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="font-weight:700;padding:14px 16px;background:var(--background);">
+              Total ({{ count }} expense{{ count|pluralize }})
+            </td>
+            <td class="text-end" style="font-weight:800;font-size:16px;padding:14px 16px;background:var(--background);font-feature-settings:'tnum';">
+              ₹{{ total|floatformat:2 }}
+            </td>
+            <td style="background:var(--background);"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <div class="empty-state-icon" aria-hidden="true"><i class="bi bi-receipt"></i></div>
+      <div class="empty-state-title">
+        {% if search_query or selected_category %}
+          No Expenses Found
+        {% else %}
+          No Expenses Yet
+        {% endif %}
+      </div>
+      <p class="empty-state-text">
+        {% if search_query or selected_category %}
+          Try adjusting your filters to see more results.
+        {% else %}
+          Start tracking your spending by adding your first expense.
+        {% endif %}
+      </p>
+      {% if not search_query and not selected_category %}
+      <a href="{% url 'expense_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Expense
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

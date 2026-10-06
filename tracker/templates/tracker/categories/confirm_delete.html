@@ -1,0 +1,56 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Delete Category{% endblock %}
+{% block topbar_title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Delete Category</h1>
+</div>
+
+<div class="delete-confirm-card">
+  <div class="delete-icon" aria-hidden="true">
+    <i class="bi bi-trash"></i>
+  </div>
+
+  <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">Delete "{{ category.name }}"?</h2>
+
+  {% if expense_count > 0 %}
+  <div class="alert alert-danger mt-3 text-start" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+    <strong>Cannot delete this category.</strong><br/>
+    This category has <strong>{{ expense_count }} expense{{ expense_count|pluralize }}</strong> associated with it.
+    Please delete or reassign those expenses first.
+  </div>
+  <div class="mt-4">
+    <a href="{% url 'category_list' %}" class="btn btn-primary">
+      <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to Categories
+    </a>
+  </div>
+  {% else %}
+  <p style="color:var(--text-secondary);margin-bottom:20px;">
+    This action cannot be undone. The category
+    <strong>"{{ category.name }}"</strong> will be permanently deleted.
+  </p>
+
+  {% if category.description %}
+  <div class="text-start p-3 mb-3" style="background:var(--background);border-radius:var(--radius);font-size:13px;">
+    <div style="color:var(--text-muted);margin-bottom:4px;">Description</div>
+    <div style="color:var(--text-secondary);">{{ category.description }}</div>
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="d-flex gap-3 justify-content-center mt-4">
+      <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-x-lg" aria-hidden="true"></i> Cancel
+      </a>
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash" aria-hidden="true"></i> Delete Category
+      </button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

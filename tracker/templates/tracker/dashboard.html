@@ -1,0 +1,322 @@
+{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ─── Dashboard Header ─── -->
+<div class="page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+  <div>
+    <p style="font-size:13px;color:var(--text-muted);margin:0 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">
+      {{ month_name }}
+    </p>
+    <h1 class="page-title">{{ greeting }}, {{ request.user.username }}! 👋</h1>
+    <p class="page-subtitle">Here's your financial overview for {{ month_name }}.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'expense_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Expense
+    </a>
+    <a href="{% url 'budget_create' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-bullseye" aria-hidden="true"></i> Set Budget
+    </a>
+    <a href="{% url 'category_create' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-tags" aria-hidden="true"></i> New Category
+    </a>
+  </div>
+</div>
+
+<!-- ─── KPI Cards ─── -->
+<div class="row g-3 mb-4">
+  <!-- Total Spent -->
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card kpi-card-primary" role="region" aria-label="Total spent this month">
+      <div class="kpi-icon kpi-icon-primary" aria-hidden="true">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div class="kpi-value font-mono">₹{{ total_spending|floatformat:2 }}</div>
+      <div class="kpi-label">Total Spent</div>
+      <div class="kpi-sublabel">This month</div>
+    </div>
+  </div>
+
+  <!-- Total Budget -->
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card kpi-card-info" role="region" aria-label="Total monthly budget">
+      <div class="kpi-icon kpi-icon-info" aria-hidden="true">
+        <i class="bi bi-bullseye"></i>
+      </div>
+      <div class="kpi-value font-mono">₹{{ total_budget|floatformat:2 }}</div>
+      <div class="kpi-label">Total Budget</div>
+      <div class="kpi-sublabel">This month</div>
+    </div>
+  </div>
+
+  <!-- Remaining -->
+  <div class="col-6 col-xl-3">
+    {% if remaining_budget >= 0 %}
+    <div class="kpi-card kpi-card-success" role="region" aria-label="Remaining budget">
+      <div class="kpi-icon kpi-icon-success" aria-hidden="true">
+        <i class="bi bi-piggy-bank"></i>
+      </div>
+      <div class="kpi-value font-mono amount-success">₹{{ remaining_budget|floatformat:2 }}</div>
+      <div class="kpi-label">Remaining</div>
+      <div class="kpi-sublabel">Available to spend</div>
+    </div>
+    {% else %}
+    <div class="kpi-card kpi-card-danger" role="region" aria-label="Budget exceeded">
+      <div class="kpi-icon kpi-icon-danger" aria-hidden="true">
+        <i class="bi bi-piggy-bank"></i>
+      </div>
+      <div class="kpi-value font-mono amount-danger">-₹{{ remaining_budget|floatformat:2|slice:"1:" }}</div>
+      <div class="kpi-label">Over Budget</div>
+      <div class="kpi-sublabel">Limit exceeded</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Transactions -->
+  <div class="col-6 col-xl-3">
+    <div class="kpi-card kpi-card-warning" role="region" aria-label="Number of transactions">
+      <div class="kpi-icon kpi-icon-warning" aria-hidden="true">
+        <i class="bi bi-receipt-cutoff"></i>
+      </div>
+      <div class="kpi-value">{{ transaction_count }}</div>
+      <div class="kpi-label">Transactions</div>
+      <div class="kpi-sublabel">This month</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Budget Overview Card ─── -->
+{% if total_budget > 0 %}
+<div class="budget-summary-card mb-4" role="region" aria-label="Monthly budget overview">
+  <div class="row align-items-center g-0" style="position:relative;z-index:1;">
+    <div class="col-md-8">
+      <div class="budget-summary-label">Monthly Budget Overview</div>
+      <div class="budget-summary-value font-mono">₹{{ total_budget|floatformat:2 }}</div>
+      <div class="budget-summary-sublabel">Total allocated budget for {{ month_name }}</div>
+
+      <div class="budget-progress-container">
+        <div class="budget-progress-info">
+          <span>
+            <strong>₹{{ total_spending|floatformat:2 }}</strong> spent
+          </span>
+          <span>
+            <strong>{{ overall_percentage|floatformat:2 }}%</strong> used
+          </span>
+        </div>
+        <div class="budget-progress-bar" role="progressbar"
+             aria-valuenow="{{ overall_percentage|floatformat:0 }}"
+             aria-valuemin="0" aria-valuemax="100"
+             aria-label="Budget usage {{ overall_percentage|floatformat:2 }}%">
+          <div class="budget-progress-fill
+            {% if overall_percentage >= 100 %}progress-fill-danger
+            {% elif overall_percentage >= 80 %}progress-fill-warning
+            {% else %}progress-fill-normal{% endif %}"
+               data-progress="{{ overall_percentage|floatformat:2 }}"
+               style="width:0%;">
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:13px;opacity:0.85;">
+          {% if overall_percentage >= 100 %}
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            You've exceeded your monthly budget by ₹{{ remaining_budget|floatformat:2|slice:"1:" }}.
+          {% elif overall_percentage >= 80 %}
+            <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+            You've used {{ overall_percentage|floatformat:2 }}% of your monthly budget. Slow down!
+          {% else %}
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            You've used {{ overall_percentage|floatformat:2 }}% of your monthly budget. Great job!
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mt-3 mt-md-0">
+      <div class="d-flex justify-content-center justify-content-md-end gap-4" style="flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div class="budget-summary-label">Spent</div>
+          <div class="budget-summary-value font-mono" style="font-size:22px;">₹{{ total_spending|floatformat:2 }}</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="budget-summary-label">Remaining</div>
+          {% if remaining_budget >= 0 %}
+          <div class="budget-summary-value font-mono" style="font-size:22px;color:#a7f3d0;">₹{{ remaining_budget|floatformat:2 }}</div>
+          {% else %}
+          <div class="budget-summary-value font-mono" style="font-size:22px;color:#fca5a5;">-₹{{ remaining_budget|floatformat:2|slice:"1:" }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="empty-state" style="padding:30px;">
+      <div class="empty-state-icon" aria-hidden="true"><i class="bi bi-bullseye"></i></div>
+      <div class="empty-state-title">No Budgets Set</div>
+      <p class="empty-state-text">Set monthly budgets to track your spending limits and get smart alerts.</p>
+      <a href="{% url 'budget_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Set Budget
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ─── Analytics + Category Health ─── -->
+<div class="row g-3 mb-4">
+
+  <!-- Spending Chart -->
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="section-title">
+          <i class="bi bi-pie-chart" aria-hidden="true"></i>
+          Spending by Category
+        </div>
+        {% if chart_labels_json %}
+        <div class="chart-container" aria-label="Spending breakdown chart">
+          <canvas id="spending-chart"
+                  data-labels='{{ chart_labels_json }}'
+                  data-values='{{ chart_values_json }}'
+                  data-colors='{{ chart_colors_json }}'
+                  aria-label="Doughnut chart of spending by category">
+          </canvas>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:30px 10px;">
+          <div class="empty-state-icon" aria-hidden="true"><i class="bi bi-pie-chart"></i></div>
+          <div class="empty-state-title">No Data Yet</div>
+          <p class="empty-state-text">Add expenses to see your spending breakdown.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Health -->
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="section-title">
+          <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+          Budget Health
+        </div>
+        {% if category_data %}
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          {% for item in category_data %}
+          <div class="category-budget-item">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <div class="cat-icon-wrap" aria-hidden="true">
+                <i class="bi {{ item.icon }}"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                  <span style="font-size:13px;font-weight:700;color:var(--text-primary);">{{ item.category.name }}</span>
+                  <span class="status-badge status-{{ item.status }}" role="status">
+                    {% if item.status == 'normal' %}<i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                    {% elif item.status == 'warning' %}<i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                    {% elif item.status == 'danger' %}<i class="bi bi-x-circle-fill" aria-hidden="true"></i>
+                    {% else %}<i class="bi bi-dash-circle" aria-hidden="true"></i>{% endif %}
+                    {{ item.status_label }}
+                  </span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between" style="font-size:11px;color:var(--text-muted);">
+                  <span>Spent: <strong style="color:var(--text-secondary);">₹{{ item.spent|floatformat:2 }}</strong></span>
+                  {% if item.budget %}
+                  <span>Budget: <strong>₹{{ item.budget|floatformat:2 }}</strong></span>
+                  {% endif %}
+                  {% if item.status != 'no-budget' %}
+                  <span><strong>{{ item.percentage|floatformat:1 }}%</strong></span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% if item.status != 'no-budget' %}
+            <div class="cat-progress" role="progressbar"
+                 aria-valuenow="{{ item.percentage|floatformat:0 }}"
+                 aria-valuemin="0" aria-valuemax="100">
+              <div class="cat-progress-fill progress-{{ item.status }}"
+                   data-progress="{{ item.percentage|floatformat:2 }}"
+                   style="width:0%;">
+              </div>
+            </div>
+            {% else %}
+            <div class="cat-progress">
+              <div class="cat-progress-fill progress-nobudget" style="width:0%;"></div>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:30px 10px;">
+          <div class="empty-state-icon" aria-hidden="true"><i class="bi bi-tags"></i></div>
+          <div class="empty-state-title">No Categories Yet</div>
+          <p class="empty-state-text">Create categories to organize your spending.</p>
+          <a href="{% url 'category_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Create Category
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Recent Transactions ─── -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="section-title mb-0">
+        <i class="bi bi-clock-history" aria-hidden="true"></i>
+        Recent Transactions
+      </div>
+      <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary btn-sm">
+        View All <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    {% if recent_expenses %}
+    <div role="list" aria-label="Recent transactions">
+      {% for item in recent_expenses %}
+      <div class="transaction-row" role="listitem">
+        <div class="transaction-icon" aria-hidden="true">
+          <i class="bi {{ item.icon }}"></i>
+        </div>
+        <div class="transaction-info">
+          <div class="transaction-category">{{ item.expense.category.name }}</div>
+          <div class="transaction-notes">
+            {% if item.expense.notes %}{{ item.expense.notes }}{% else %}<em>No notes</em>{% endif %}
+          </div>
+        </div>
+        <div class="transaction-date">{{ item.expense.date|date:"M d, Y" }}</div>
+        <div class="transaction-amount font-mono">₹{{ item.expense.amount|floatformat:2 }}</div>
+        <div class="d-flex gap-1">
+          <a href="{% url 'expense_edit' item.expense.pk %}"
+             class="btn btn-outline-secondary btn-sm btn-icon"
+             aria-label="Edit expense">
+            <i class="bi bi-pencil" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px 20px;">
+      <div class="empty-state-icon" aria-hidden="true"><i class="bi bi-receipt"></i></div>
+      <div class="empty-state-title">No Expenses Yet</div>
+      <p class="empty-state-text">Start tracking your spending by adding your first expense.</p>
+      <a href="{% url 'expense_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Expense
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

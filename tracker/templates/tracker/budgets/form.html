@@ -1,0 +1,99 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ title }}</h1>
+  <p class="page-subtitle">{{ subtitle }}</p>
+</div>
+
+<div class="form-card">
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger mb-3" role="alert">
+      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Category -->
+    <div class="form-group">
+      <label for="{{ form.category.id_for_label }}" class="form-label">
+        Category <span aria-hidden="true" style="color:var(--danger);">*</span>
+      </label>
+      {{ form.category }}
+      {% if form.category.errors %}
+      <div class="invalid-feedback d-block">
+        <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
+        {{ form.category.errors|join:", " }}
+      </div>
+      {% endif %}
+      {% if not form.category.field.queryset.exists %}
+      <div class="alert alert-warning mt-2" style="font-size:12px;" role="alert">
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        No categories found. <a href="{% url 'category_create' %}">Create a category</a> first.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Month -->
+    <div class="form-group">
+      <label for="{{ form.month_year.id_for_label }}" class="form-label">
+        Month <span aria-hidden="true" style="color:var(--danger);">*</span>
+      </label>
+      {{ form.month_year }}
+      {% if form.month_year.errors %}
+      <div class="invalid-feedback d-block mt-1">
+        <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
+        {{ form.month_year.errors|join:", " }}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Monthly Limit -->
+    <div class="form-group">
+      <label for="{{ form.monthly_limit.id_for_label }}" class="form-label">
+        Monthly Limit <span aria-hidden="true" style="color:var(--danger);">*</span>
+      </label>
+      <div class="input-group">
+        <span class="input-group-text" aria-label="Indian Rupees">₹</span>
+        {{ form.monthly_limit }}
+      </div>
+      {% if form.monthly_limit.errors %}
+      <div class="invalid-feedback d-block mt-1">
+        <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i>
+        {{ form.monthly_limit.errors|join:", " }}
+      </div>
+      {% endif %}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+        Must be greater than ₹0.00
+      </div>
+    </div>
+
+    <!-- Budget Status Info -->
+    <div class="p-3 mb-3" style="background:var(--primary-light);border-radius:var(--radius);border-left:4px solid var(--primary);">
+      <div style="font-size:12px;font-weight:600;color:var(--primary);margin-bottom:4px;">
+        <i class="bi bi-info-circle" aria-hidden="true"></i> Budget Alert Thresholds
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);">
+        <span style="color:var(--success);">● On Track</span> — Under 80% used &nbsp;
+        <span style="color:var(--warning);">● Near Limit</span> — 80%–99% used &nbsp;
+        <span style="color:var(--danger);">● Over Budget</span> — 100%+ used
+      </div>
+    </div>
+
+    <div class="d-flex gap-3 mt-4">
+      <a href="{% url 'budget_list' %}" class="btn btn-outline-secondary flex-fill">
+        <i class="bi bi-x-lg" aria-hidden="true"></i> Cancel
+      </a>
+      <button type="submit" class="btn btn-primary flex-fill">
+        <i class="bi bi-check-lg" aria-hidden="true"></i> {{ button_text }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

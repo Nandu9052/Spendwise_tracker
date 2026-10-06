@@ -1,0 +1,55 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Delete Expense{% endblock %}
+{% block topbar_title %}Delete Expense{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Delete Expense</h1>
+</div>
+
+<div class="delete-confirm-card">
+  <div class="delete-icon" aria-hidden="true">
+    <i class="bi bi-trash"></i>
+  </div>
+
+  <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">Delete this expense?</h2>
+  <p style="color:var(--text-secondary);margin-bottom:20px;">This action cannot be undone.</p>
+
+  <div class="text-start p-3 mb-3" style="background:var(--background);border-radius:var(--radius);">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="transaction-icon" aria-hidden="true">
+        <i class="bi {{ icon }}"></i>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;">{{ expense.category.name }}</div>
+        {% if expense.notes %}
+        <div style="font-size:13px;color:var(--text-muted);">{{ expense.notes }}</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-4 flex-wrap">
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Amount</div>
+        <div style="font-size:18px;font-weight:800;color:var(--danger);font-feature-settings:'tnum';">₹{{ expense.amount|floatformat:2 }}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Date</div>
+        <div style="font-size:15px;font-weight:600;">{{ expense.date|date:"F d, Y" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="d-flex gap-3 justify-content-center">
+      <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-x-lg" aria-hidden="true"></i> Cancel
+      </a>
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash" aria-hidden="true"></i> Delete Expense
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Categories{% endblock %}
+{% block topbar_title %}Categories{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+  <div>
+    <h1 class="page-title">Categories</h1>
+    <p class="page-subtitle">Organize your spending your way.</p>
+  </div>
+  <a href="{% url 'category_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Category
+  </a>
+</div>
+
+{% if categories %}
+<div class="row g-3">
+  {% for item in categories %}
+  <div class="col-sm-6 col-xl-4">
+    <div class="category-card">
+      <div class="category-card-header">
+        <div class="category-card-icon" aria-hidden="true">
+          <i class="bi {{ item.icon }}"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <h2 class="category-card-name">{{ item.category.name }}</h2>
+          {% if item.category.description %}
+          <p class="category-card-desc">{{ item.category.description }}</p>
+          {% else %}
+          <p class="category-card-desc" style="font-style:italic;">No description</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-3">
+        <div class="category-stat" style="flex:1;">
+          <i class="bi bi-receipt" aria-hidden="true"></i>
+          <span>{{ item.expense_count }}</span>
+          <span class="category-stat-value">expenses</span>
+        </div>
+        {% if item.budget %}
+        <div class="category-stat" style="flex:1;">
+          <i class="bi bi-bullseye" aria-hidden="true"></i>
+          <span class="category-stat-value font-mono">₹{{ item.budget|floatformat:2 }}</span>
+          <span>budget</span>
+        </div>
+        {% else %}
+        <div class="category-stat" style="flex:1;">
+          <i class="bi bi-dash-circle" aria-hidden="true"></i>
+          <span style="font-style:italic;">No budget</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex gap-2 mt-3 pt-3" style="border-top:1px solid var(--border-light);">
+        <a href="{% url 'category_edit' item.category.pk %}"
+           class="btn btn-outline-secondary btn-sm flex-fill"
+           aria-label="Edit {{ item.category.name }}">
+          <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+        </a>
+        <a href="{% url 'category_delete' item.category.pk %}"
+           class="btn btn-sm flex-fill"
+           style="background:var(--danger-light);color:var(--danger);border:1px solid transparent;"
+           aria-label="Delete {{ item.category.name }}">
+          <i class="bi bi-trash" aria-hidden="true"></i> Delete
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <div class="empty-state-icon" aria-hidden="true"><i class="bi bi-tags"></i></div>
+      <div class="empty-state-title">No Categories Yet</div>
+      <p class="empty-state-text">Create categories to organize your spending and set budgets.</p>
+      <a href="{% url 'category_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Create Category
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

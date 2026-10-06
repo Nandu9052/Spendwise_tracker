@@ -1,46 +1,56 @@
 from django.conf import settings
+from django.urls import set_script_prefix
 
 
 class DynamicCsrfMiddleware:
     """
-    Dynamically trusts the incoming Origin and Host headers so that POST
-    forms work seamlessly in ANY environment:
-
-      - localhost / 127.0.0.1 direct access
-      - Docker / Coder container port-forwarding
-      - Gitpod / GitHub Codespaces
-      - LEARNSQUARE / SemesterPrep reverse-proxy  ← this is the key use case
-      - Any other HTTPS tunnel (ngrok, cloudflared, VS Code port forward …)
-
-    How it works
-    ────────────
-    LEARNSQUARE exposes your Django app through an HTTPS reverse proxy whose
-    hostname looks like:
-
-        https://team-284-global.dev.semesterprep.in:8443/proxy/8000/
-
-    The browser sends  Origin: https://team-284-global.dev.semesterprep.in:8443
-    on every POST request. Django 4+ rejects POST requests whose Origin is not
-    in CSRF_TRUSTED_ORIGINS.
-
-    This middleware reads the Origin (and Host) of EVERY incoming request
-    BEFORE Django's CsrfViewMiddleware runs, and adds the origin to the
-    trusted list on the fly — so CSRF verification always passes without
-    hard-coding any domain.
+    1. Dynamically trusts incoming Origin and Host headers so CSRF works
+       seamlessly under any proxy (LEARNSQUARE, SemesterPrep, Codespaces, etc.)
+    2. Automatically detects code-server reverse proxy (/proxy/8000/) and sets
+       Django's script prefix so all URLs, links ({% url ... %}), and redirects
+       (redirect('dashboard')) automatically stay inside /proxy/8000/ instead of
+       stripping the prefix and hitting port 8443 directly with 404 Not Found.
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # ── 1. Trust the HTTP Origin header ───────────────────────────────
+        # ── 1. Detect Reverse Proxy Prefix (code-server / LEARNSQUARE) ───
+        prefix = ''
+        
+        # Check explicit forward headers
+        fwd_prefix = request.META.get('HTTP_X_FORWARDED_PREFIX', '').strip()
+        if fwd_prefix:
+            prefix = fwd_prefix
+        elif request.path_info.startswith('/proxy/8000'):
+            prefix = '/proxy/8000'
+            request.path_info = request.path_info[len('/proxy/8000'):] or '/'
+        elif request.path_info.startswith('/absproxy/8000'):
+            prefix = '/absproxy/8000'
+            request.path_info = request.path_info[len('/absproxy/8000'):] or '/'
+        else:
+            # Check if accessed via port 8443 (LEARNSQUARE code-server port)
+            host = request.get_host()
+            fwd_host = request.META.get('HTTP_X_FORWARDED_HOST', '')
+            referer = request.META.get('HTTP_REFERER', '')
+            if ':8443' in host or ':8443' in fwd_host or '/proxy/8000' in referer:
+                prefix = '/proxy/8000'
+
+        if prefix:
+            if not prefix.endswith('/'):
+                prefix += '/'
+            set_script_prefix(prefix)
+        else:
+            set_script_prefix('/')
+
+        # ── 2. Trust HTTP Origin & Host for CSRF ─────────────────────────
         origin = request.META.get('HTTP_ORIGIN', '').strip()
         if origin and origin not in settings.CSRF_TRUSTED_ORIGINS:
             settings.CSRF_TRUSTED_ORIGINS.append(origin)
 
-        # ── 2. Trust the Host (covers non-browser clients that omit Origin) ─
         try:
-            host = request.get_host()   # returns  host  or  host:port
+            host = request.get_host()
             if host:
                 for scheme in ('http://', 'https://'):
                     candidate = f'{scheme}{host}'
@@ -49,7 +59,6 @@ class DynamicCsrfMiddleware:
         except Exception:
             pass
 
-        # ── 3. Trust X-Forwarded-Host if the proxy sets it ────────────────
         fwd_host = request.META.get('HTTP_X_FORWARDED_HOST', '').strip()
         if fwd_host:
             for scheme in ('http://', 'https://'):
@@ -57,4 +66,5 @@ class DynamicCsrfMiddleware:
                 if candidate not in settings.CSRF_TRUSTED_ORIGINS:
                     settings.CSRF_TRUSTED_ORIGINS.append(candidate)
 
-        return self.get_response(request)
+        response = self.get_response(request)
+        return response

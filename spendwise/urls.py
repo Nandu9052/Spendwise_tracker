@@ -8,8 +8,13 @@ def root_redirect(request):
         return redirect('dashboard')
     return redirect('login')
 
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', root_redirect, name='root'),
     path('', include('tracker.urls')),
 ]
+
+urlpatterns += staticfiles_urlpatterns()
+

@@ -11,169 +11,405 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="{% static 'tracker/css/style.css' %}" />
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a56d4;
+      --primary-light: #eef0fd;
+      --secondary: #7209b7;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--background);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+    }
+    .auth-wrapper {
+      min-height: 100vh;
+      width: 100%;
+    }
+    .auth-left-panel {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-left-panel::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(67, 97, 238, 0.35) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .auth-left-panel::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      left: -60px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(114, 9, 183, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .auth-illustration-container {
+      position: relative;
+      z-index: 2;
+      max-width: 440px;
+      width: 100%;
+    }
+    .auth-mini-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .auth-mini-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .auth-mini-card-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .auth-mini-card-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      font-feature-settings: "tnum";
+    }
+    .auth-tagline {
+      text-align: center;
+      margin-top: 36px;
+    }
+    .auth-tagline-title {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    .auth-tagline-sub {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .auth-right-panel {
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 32px;
+      min-height: 100vh;
+    }
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      text-decoration: none;
+    }
+    .auth-brand-icon {
+      width: 46px;
+      height: 46px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: white;
+      box-shadow: 0 4px 14px rgba(67, 97, 238, 0.35);
+    }
+    .auth-brand-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+    .auth-form-card {
+      width: 100%;
+      max-width: 380px;
+    }
+    .auth-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+    .auth-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 22px;
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+    .input-group-text {
+      background: var(--background);
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .password-input-group {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      z-index: 5;
+    }
+    .btn-primary-fintech {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 15px;
+      transition: all 0.2s ease;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary-fintech:hover {
+      background: var(--primary-dark);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(67, 97, 238, 0.35);
+    }
+  </style>
 </head>
 <body>
 
 {% include 'tracker/includes/messages.html' %}
 
-<div class="auth-page">
-  <!-- Left Panel -->
-  <div class="auth-left d-none d-lg-flex">
-    <div class="auth-illustration">
-      <div class="auth-illustration-cards">
+<div class="auth-wrapper container-fluid p-0">
+  <div class="row g-0 min-vh-100">
+    
+    <!-- Left Panel -->
+    <div class="col-lg-6 col-xl-7 d-none d-lg-flex auth-left-panel">
+      <div class="auth-illustration-container">
         <div class="auth-mini-card">
-          <div class="auth-mini-card-icon" style="background:rgba(67,97,238,0.2);color:#818cf8;">
+          <div class="auth-mini-card-icon" style="background:rgba(67,97,238,0.25);color:#818cf8;">
             <i class="bi bi-tags"></i>
           </div>
-          <div class="auth-mini-card-text">
+          <div>
             <div class="auth-mini-card-label">Smart Categories</div>
-            <div class="auth-mini-card-value">Organized</div>
+            <div class="auth-mini-card-value">Food, Travel, Bills & More</div>
           </div>
         </div>
+
         <div class="auth-mini-card">
           <div class="auth-mini-card-icon" style="background:rgba(245,158,11,0.2);color:#fbbf24;">
             <i class="bi bi-bullseye"></i>
           </div>
-          <div class="auth-mini-card-text">
-            <div class="auth-mini-card-label">Budget Goals</div>
-            <div class="auth-mini-card-value">On Track</div>
+          <div>
+            <div class="auth-mini-card-label">Budget Thresholds</div>
+            <div class="auth-mini-card-value">80% Warning & 100% Alert</div>
           </div>
         </div>
+
         <div class="auth-mini-card">
           <div class="auth-mini-card-icon" style="background:rgba(16,185,129,0.2);color:#10b981;">
             <i class="bi bi-shield-check"></i>
           </div>
-          <div class="auth-mini-card-text">
-            <div class="auth-mini-card-label">Private & Secure</div>
-            <div class="auth-mini-card-value">100% Safe</div>
+          <div>
+            <div class="auth-mini-card-label">Private & Isolated</div>
+            <div class="auth-mini-card-value">100% Data Confidentiality</div>
           </div>
         </div>
-      </div>
-      <div class="auth-tagline">
-        <div class="auth-tagline-title">Start Your<br/>Financial Journey</div>
-        <div class="auth-tagline-sub">Join thousands managing their money smarter.</div>
+
+        <div class="auth-tagline">
+          <div class="auth-tagline-title">Take Control of<br/>Your Finances.</div>
+          <div class="auth-tagline-sub">Join SpendWise and start tracking your expenses effortlessly.</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Right Panel -->
-  <div class="auth-right">
-    <a href="#" class="auth-brand">
-      <div class="auth-brand-icon" aria-hidden="true">
-        <i class="bi bi-wallet2"></i>
+    <!-- Right Panel (Sign Up Form) -->
+    <div class="col-lg-6 col-xl-5 auth-right-panel">
+      <a href="{% url 'root' %}" class="auth-brand">
+        <div class="auth-brand-icon" aria-hidden="true">
+          <i class="bi bi-wallet2"></i>
+        </div>
+        <span class="auth-brand-name">SpendWise</span>
+      </a>
+
+      <div class="auth-form-card">
+        <h1 class="auth-title">Create account</h1>
+        <p class="auth-subtitle">Start tracking your expenses today.</p>
+
+        <form method="post" action="{% url 'register' %}" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger mb-3 py-2 px-3" role="alert" style="font-size:13px;border-radius:8px;">
+            <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Username -->
+          <div class="mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person" aria-hidden="true"></i></span>
+              <input type="text"
+                     id="{{ form.username.id_for_label }}"
+                     name="username"
+                     class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                     placeholder="Choose a username"
+                     value="{{ form.username.value|default:'' }}"
+                     autocomplete="username"
+                     required
+                     aria-required="true" />
+            </div>
+            {% if form.username.errors %}
+            <div class="text-danger mt-1" style="font-size:12px;">{{ form.username.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Password -->
+          <div class="mb-3">
+            <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+            <div class="password-input-group input-group">
+              <span class="input-group-text"><i class="bi bi-lock" aria-hidden="true"></i></span>
+              <input type="password"
+                     id="{{ form.password1.id_for_label }}"
+                     name="password1"
+                     class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                     placeholder="Create a password"
+                     autocomplete="new-password"
+                     required
+                     aria-required="true" />
+              <button type="button"
+                      class="password-toggle"
+                      data-target="{{ form.password1.id_for_label }}"
+                      aria-label="Show password">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            {% if form.password1.errors %}
+            <div class="text-danger mt-1" style="font-size:12px;">{{ form.password1.errors|join:", " }}</div>
+            {% endif %}
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">
+              Min. 8 characters. Cannot be entirely numeric.
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="mb-4">
+            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
+            <div class="password-input-group input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill" aria-hidden="true"></i></span>
+              <input type="password"
+                     id="{{ form.password2.id_for_label }}"
+                     name="password2"
+                     class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                     placeholder="Confirm your password"
+                     autocomplete="new-password"
+                     required
+                     aria-required="true" />
+              <button type="button"
+                      class="password-toggle"
+                      data-target="{{ form.password2.id_for_label }}"
+                      aria-label="Show confirm password">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            {% if form.password2.errors %}
+            <div class="text-danger mt-1" style="font-size:12px;">{{ form.password2.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary-fintech mb-3">
+            <i class="bi bi-person-plus" aria-hidden="true"></i>
+            Create Account
+          </button>
+        </form>
+
+        <p class="text-center mt-3" style="font-size:14px;color:var(--text-secondary);">
+          Already have an account?
+          <a href="{% url 'login' %}" style="font-weight:600;color:var(--primary);">Sign in</a>
+        </p>
       </div>
-      <span class="auth-brand-name">SpendWise</span>
-    </a>
-
-    <div class="auth-card">
-      <h1 class="auth-title">Create account</h1>
-      <p class="auth-subtitle">Start tracking your expenses today.</p>
-
-      <form method="post" action="{% url 'register' %}" novalidate>
-        {% csrf_token %}
-
-        <!-- Non-field errors -->
-        {% if form.non_field_errors %}
-        <div class="alert alert-danger mb-3" role="alert">
-          <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Username -->
-        <div class="form-group">
-          <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-person" aria-hidden="true"></i></span>
-            <input type="text"
-                   id="{{ form.username.id_for_label }}"
-                   name="username"
-                   class="form-control form-control-lg {% if form.username.errors %}is-invalid{% endif %}"
-                   placeholder="Choose a username"
-                   value="{{ form.username.value|default:'' }}"
-                   autocomplete="username"
-                   required
-                   aria-required="true" />
-          </div>
-          {% if form.username.errors %}
-          <div class="invalid-feedback d-block mt-1">
-            <i class="bi bi-exclamation-circle me-1"></i>{{ form.username.errors|join:", " }}
-          </div>
-          {% endif %}
-        </div>
-
-        <!-- Password -->
-        <div class="form-group">
-          <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
-          <div class="password-input-group input-group">
-            <span class="input-group-text"><i class="bi bi-lock" aria-hidden="true"></i></span>
-            <input type="password"
-                   id="{{ form.password1.id_for_label }}"
-                   name="password1"
-                   class="form-control form-control-lg {% if form.password1.errors %}is-invalid{% endif %}"
-                   placeholder="Create a password"
-                   autocomplete="new-password"
-                   required
-                   aria-required="true" />
-            <button type="button"
-                    class="password-toggle"
-                    data-target="{{ form.password1.id_for_label }}"
-                    aria-label="Show password">
-              <i class="bi bi-eye" aria-hidden="true"></i>
-            </button>
-          </div>
-          {% if form.password1.errors %}
-          <div class="invalid-feedback d-block mt-1">
-            <i class="bi bi-exclamation-circle me-1"></i>{{ form.password1.errors|join:", " }}
-          </div>
-          {% endif %}
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-            Min. 8 characters. Cannot be entirely numeric.
-          </div>
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="form-group">
-          <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
-          <div class="password-input-group input-group">
-            <span class="input-group-text"><i class="bi bi-lock-fill" aria-hidden="true"></i></span>
-            <input type="password"
-                   id="{{ form.password2.id_for_label }}"
-                   name="password2"
-                   class="form-control form-control-lg {% if form.password2.errors %}is-invalid{% endif %}"
-                   placeholder="Confirm your password"
-                   autocomplete="new-password"
-                   required
-                   aria-required="true" />
-            <button type="button"
-                    class="password-toggle"
-                    data-target="{{ form.password2.id_for_label }}"
-                    aria-label="Show confirm password">
-              <i class="bi bi-eye" aria-hidden="true"></i>
-            </button>
-          </div>
-          {% if form.password2.errors %}
-          <div class="invalid-feedback d-block mt-1">
-            <i class="bi bi-exclamation-circle me-1"></i>{{ form.password2.errors|join:", " }}
-          </div>
-          {% endif %}
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
-          <i class="bi bi-person-plus" aria-hidden="true"></i>
-          Create Account
-        </button>
-      </form>
-
-      <p class="text-center" style="font-size:14px;color:var(--text-secondary);">
-        Already have an account?
-        <a href="{% url 'login' %}" style="font-weight:600;">Sign in</a>
-      </p>
     </div>
+
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'tracker/js/app.js' %}"></script>
+<script>
+  document.querySelectorAll('.password-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.getAttribute('data-target');
+      var input = document.getElementById(id);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="bi bi-eye"></i>';
+      }
+    });
+  });
+</script>
 </body>
 </html>
